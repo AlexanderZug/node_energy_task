@@ -1,11 +1,12 @@
 import calendar
 import csv
+from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 
 from dateutil import parser
 
-from exeptions import InsufficientDataError
+from src.exeptions import InsufficientDataError
 
 
 class Invoice:
@@ -36,19 +37,19 @@ class Invoice:
             ):
                 raise ValueError(f"Date {value['date']} not found.")
 
-    def get_dates(self) -> list[str]:
+    def get_sorted_dates(self) -> list[str]:
         dates = []
         for value in self.get_meter_values():
             dates.append(value["date"])
         return sorted(dates, key=lambda date: parser.parse(date))
 
     def check_sufficient_data_available_in_the_past(self) -> None:
-        first_date = parser.parse(self.get_dates()[0])
+        first_date = parser.parse(self.get_sorted_dates()[0])
         if first_date.month == self.month and first_date.day != 1:
             raise InsufficientDataError()
 
     def check_sufficient_data_available_in_the_future(self) -> None:
-        last_date = parser.parse(self.get_dates()[-1])
+        last_date = parser.parse(self.get_sorted_dates()[-1])
         days_in_month = calendar.monthrange(self.year, self.month)[1]
         if last_date.month == self.month and last_date.day != days_in_month:
             raise InsufficientDataError()
@@ -59,16 +60,20 @@ class Invoice:
         base_price = base_tariff / Decimal(365) * Decimal(days_in_month)
         return base_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
-    def get_days_difference(
-        self, first_date: parser.parse, second_date: parser.parse
-    ) -> int:
-        return abs((first_date - second_date).days)
+    def get_energy_price(self) -> Decimal:
+        energy_tariff = Decimal(self.get_customer()[0]["energy_tariff"])
+        share_period = [
+            item
+            for item in self.get_share_period()
+            if parser.parse(item["date"]).month == self.month
+        ]
+        energy_price = share_period[0]["value"] * (energy_tariff / Decimal(100))
+        return energy_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
-    def get_energy_price(self):
-        # energy_tariff = Decimal(self.get_customer()[0]["energy_tariff"])
-
-        dates = self.get_dates()
+    def get_share_period(self):
+        dates = self.get_sorted_dates()
         meter_values = self.get_meter_values()
+        share_period = []
 
         for key, date in enumerate(dates):
             if key == 0 or key == len(dates) - 1:
@@ -90,7 +95,7 @@ class Invoice:
             days_difference1 = Decimal(
                 current_date.day
                 / self.get_days_difference(current_date, previous_date)
-                * int(current_value_dict["value"])
+                * float(current_value_dict["value"])
             )
             days_difference2 = Decimal(
                 (
@@ -98,17 +103,22 @@ class Invoice:
                     - current_date.day
                 )
                 / self.get_days_difference(current_date, next_date)
-                * int(current_value_dict["value"])
+                * float(current_value_dict["value"])
             )
 
-            print(
-                days_difference2.quantize(Decimal("0.01"), rounding=ROUND_DOWN),
-                days_difference1.quantize(Decimal("0.01"), rounding=ROUND_DOWN),
+            share_period.append(
+                {"date": date, "value": days_difference1 + days_difference2}
             )
+        return share_period
 
     @staticmethod
-    def read_csv(file_path) -> list[dict]:
-        if not Path(file_path).exists():
+    def get_days_difference(first_date: datetime, second_date: datetime) -> int:
+        return abs((first_date - second_date).days)
+
+    @staticmethod
+    def read_csv(file_path: str) -> list[dict[str, str]]:
+        path = Path(file_path)
+        if not path.exists():
             raise FileNotFoundError(f"File {file_path} not found.")
-        with Path.open(file_path, newline="") as csvfile:
+        with path.open(newline="") as csvfile:
             return list(csv.DictReader(csvfile))

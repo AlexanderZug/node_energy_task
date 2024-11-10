@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Skript create a report on the energy consumption of customers"
 authors = ["AlexanderZug <alexandertsygankov.unterwegs@gmail.com>"]
 readme = "README.md"
-package-mode = false
+packages = [{ include = "src" }]
+
+[tool.poetry.scripts]
+create_invoice = 'src.cli:main'
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -49,9 +52,6 @@ select = [
     "RUF", # ruff
     "SIM", # flake8-simplify
     "UP",  # pyupgrade
-]
-ignore = [
-    "E501", # line too long, handled by `ruff format`
 ]
 
 [tool.mypy]

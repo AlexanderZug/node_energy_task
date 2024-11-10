@@ -1,7 +1,7 @@
 import logging
 from argparse import ArgumentParser, Namespace
 
-from create_invoice import Invoice
+from src.create_invoice import Invoice
 
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -43,7 +43,7 @@ def create_invoice() -> None:
         options.year,
         options.month,
     )
-    invoice.get_energy_price()
+    print(invoice.get_energy_price())
     # messages: CheckMessages = CheckMessages()
     #
     # try:
