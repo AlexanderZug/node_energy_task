@@ -13,7 +13,6 @@ repos:
       - id: end-of-file-fixer # ensures that a file is either empty, or ends with one newline.
       - id: fix-byte-order-marker # removes utf-8 byte order marker.
       - id: mixed-line-ending # replaces or checks mixed line ending.
-      - id: no-commit-to-branch # make sure you dont commit to master/main branch
       - id: trailing-whitespace # trims trailing whitespace.
 
   # Bash

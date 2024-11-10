@@ -29,6 +29,7 @@ clean:
 	@rm -rf \
 		.coverage \
 		.mypy_cache/ \
+		.ruff_cache/ \
 		.pytest_cache/ \
 		cov/
 	@find . -type d -name "__pycache__" -prune -exec rm -rf "{}" \;

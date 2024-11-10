@@ -102,7 +102,6 @@ class Invoice:
             )
 
             print(
-                # self.get_days_difference(current_date, previous_date),
                 days_difference2.quantize(Decimal("0.01"), rounding=ROUND_DOWN),
                 days_difference1.quantize(Decimal("0.01"), rounding=ROUND_DOWN),
             )
