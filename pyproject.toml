@@ -1,0 +1,64 @@
+[tool.poetry]
+name = "node_energy_task"
+version = "0.1.0"
+description = "Skript create a report on the energy consumption of customers"
+authors = ["AlexanderZug <alexandertsygankov.unterwegs@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dateutil = "^2.9.0.post0"
+
+[tool.poetry.group.dev.dependencies]
+mypy = { extras = ["reports"], version = "*" }
+pytest = "*"
+pytest-cov = "*"
+ruff = "*"
+types-paramiko = "^3.4.0.20240423"
+types-python-dateutil = "^2.9.0.20241003"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Since poetry does not support PEP 621 yet, we have to configure the minimum
+# required python version for ruff.
+# https://docs.astral.sh/ruff/settings/#target-version
+target-version = "py39"
+
+[tool.ruff.lint]
+# For details about available rules see:
+# https://docs.astral.sh/ruff/rules/
+select = [
+    # Basic rules
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    # Advanceced rules
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "C9",  # mccabe
+    "G",   # flake8-logging-format
+    "ICN", # flake8-import-conventions
+    "ISC", # flake8-implicit-str-concat
+    "N",   # pep8-naming
+    "PTH", # flake8-use-pathlib
+    "RUF", # ruff
+    "SIM", # flake8-simplify
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long, handled by `ruff format`
+]
+
+[tool.mypy]
+show_error_codes = true
+warn_unused_ignores = true
+strict = true
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
+addopts = ["--cov=app"]
