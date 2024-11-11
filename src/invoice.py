@@ -178,7 +178,10 @@ class Invoice:
 
         return f"{first_day.strftime('%d.%m.%Y')} bis {last_day.strftime('%d.%m.%Y')}"
 
-    def make_report(self):
+    def make_report(self) -> None:
+        self.check_customer_exists()
+        self.check_date_exists()
+
         customer_info = self.get_customer()[0]
         customer_name = customer_info["name"]
         customer_street = customer_info["street"]
@@ -202,7 +205,8 @@ class Invoice:
             f"Summe        {total_price:.2f} €",
         ]
 
-        with open("report.txt", "w") as file:
+        file_path = Path(f"reports/report_{customer_info['id']}_{self.month}.txt")
+        with file_path.open("w") as file:
             for line in report_lines:
                 file.write(line + "\n")
 

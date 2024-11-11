@@ -4,7 +4,7 @@ from argparse import ArgumentParser, Namespace
 from src.invoice import Invoice
 
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s"
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -43,24 +43,12 @@ def create_invoice() -> None:
         options.year,
         options.month,
     )
-    invoice.make_report()
-    # messages: CheckMessages = CheckMessages()
-    #
-    # try:
-    #     status: str = proxy_check.get_state()
-    # except Exception as exc:
-    #     logger.exception(exc)
-    #     messages.unknown(f"Error: {exc!r}")
-    #     return exit_check(messages)
-    #
-    # message_text = f"Interface status: {status}"
-    # if status == "Secured":
-    #     messages.ok(message_text)
-    # elif status == "Unsecured":
-    #     messages.critical(message_text)
-    # else:
-    #     messages.warning(message_text)
-    # return exit_check(messages)
+
+    try:
+        invoice.make_report()
+        logger.info("Invoice created successfully")
+    except Exception as exc:
+        logger.error("An error occurred: %s", exc)
 
 
 def main() -> None:
