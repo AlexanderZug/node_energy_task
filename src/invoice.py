@@ -84,7 +84,7 @@ class Invoice:
             for date in self.insert_missing_month(consumptions)
             if parser.parse(date["date"]).month == self.month
         ]
-        print(share_period)
+
         energy_price = Decimal(share_period[-1]["value"]) * (
             energy_tariff / Decimal(100)
         )
