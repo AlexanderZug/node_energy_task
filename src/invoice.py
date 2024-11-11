@@ -82,7 +82,7 @@ class Invoice:
         share_period = [
             date
             for date in self.insert_missing_month(consumptions)
-            if parser.parse(date["date"]).month == self.month
+            if parser.parse(str(date["date"])).month == self.month
         ]
 
         energy_price = Decimal(share_period[-1]["value"]) * (
@@ -90,12 +90,14 @@ class Invoice:
         )
         return energy_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
-    def insert_missing_month(self, consumptions: list[dict]) -> list[dict]:
+    def insert_missing_month(
+        self, consumptions: list[dict[str, str | Decimal]]
+    ) -> list[dict[str, Decimal | str]]:
         meter_values = self.get_meter_values()
 
         for index in range(len(consumptions) - 1):
-            current_date = parser.parse(consumptions[index]["date"])
-            next_date = parser.parse(consumptions[index + 1]["date"])
+            current_date = parser.parse(str(consumptions[index]["date"]))
+            next_date = parser.parse(str(consumptions[index + 1]["date"]))
 
             if current_date.month < self.month < next_date.month:
                 new_date = datetime(self.year, self.month, 1)
@@ -106,7 +108,7 @@ class Invoice:
                         if parser.parse(value["date"]) == next_date
                     ),
                 )
-                new_entry = {
+                new_entry: dict[str, str | Decimal] = {
                     "date": new_date.strftime("%Y-%m-%d"),
                     "value": Decimal(
                         calendar.monthrange(self.year, self.month)[1]
@@ -118,10 +120,10 @@ class Invoice:
                 break
         return consumptions
 
-    def get_interval_consumption(self) -> list[dict]:
+    def get_interval_consumption(self) -> list[dict[str, Decimal | str]]:
         dates = self.check_sufficient_data_available(self.get_sorted_dates())
         meter_values = self.get_meter_values()
-        share_period = []
+        share_period: list[dict[str, Decimal | str]] = []
 
         for index, date in enumerate(dates):
             if index == 0 or index == len(dates) - 1:
@@ -175,8 +177,8 @@ class Invoice:
     def get_month_range(self) -> str:
         first_day = datetime(self.year, self.month, 1)
 
-        last_day = calendar.monthrange(self.year, self.month)[1]
-        last_day = datetime(self.year, self.month, last_day)
+        last_day_number = calendar.monthrange(self.year, self.month)[1]
+        last_day = datetime(self.year, self.month, last_day_number)
 
         return f"{first_day.strftime('%d.%m.%Y')} bis {last_day.strftime('%d.%m.%Y')}"
 
