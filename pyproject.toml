@@ -53,6 +53,9 @@ select = [
     "SIM", # flake8-simplify
     "UP",  # pyupgrade
 ]
+ignore = [
+    "E501", # line too long, handled by `ruff format`
+]
 
 [tool.mypy]
 show_error_codes = true
