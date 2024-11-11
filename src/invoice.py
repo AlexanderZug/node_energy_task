@@ -1,7 +1,7 @@
 import calendar
 import csv
 from datetime import datetime, timedelta
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_DOWN, ROUND_UP, Decimal
 from pathlib import Path
 
 from dateutil import parser
@@ -57,11 +57,7 @@ class Invoice:
         self, sorted_dates: list[str]
     ) -> list[str]:
         first_date = parser.parse(sorted_dates[0])
-        if (
-            first_date.month < self.month
-            or first_date.month == self.month
-            and first_date.day == 1
-        ):
+        if first_date.month < self.month:
             return sorted_dates
         raise ValueError
 
@@ -69,11 +65,7 @@ class Invoice:
         self, sorted_dates: list[str]
     ) -> list[str]:
         last_date = parser.parse(sorted_dates[-1])
-        days_in_month = calendar.monthrange(self.year, self.month)[1]
         if last_date.month > self.month:
-            return sorted_dates
-        elif last_date.month == self.month and last_date.day == days_in_month:
-            sorted_dates.append(sorted_dates[-1])
             return sorted_dates
         raise ValueError
 
@@ -86,30 +78,40 @@ class Invoice:
     def get_energy_price(self) -> Decimal:
         energy_tariff = Decimal(self.get_customer()[0]["energy_tariff"])
         consumptions = self.get_interval_consumption()
+
         share_period = [
             date
             for date in self.insert_missing_month(consumptions)
             if parser.parse(date["date"]).month == self.month
         ]
-
+        print(share_period)
         energy_price = Decimal(share_period[-1]["value"]) * (
             energy_tariff / Decimal(100)
         )
         return energy_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
     def insert_missing_month(self, consumptions: list[dict]) -> list[dict]:
+        meter_values = self.get_meter_values()
+
         for index in range(len(consumptions) - 1):
             current_date = parser.parse(consumptions[index]["date"])
             next_date = parser.parse(consumptions[index + 1]["date"])
 
             if current_date.month < self.month < next_date.month:
                 new_date = datetime(self.year, self.month, 1)
+                next_value_dict = next(
+                    (
+                        value
+                        for value in meter_values
+                        if parser.parse(value["date"]) == next_date
+                    ),
+                )
                 new_entry = {
                     "date": new_date.strftime("%Y-%m-%d"),
                     "value": Decimal(
                         calendar.monthrange(self.year, self.month)[1]
                         / self.get_days_difference(current_date, next_date)
-                        * float(consumptions[index + 1]["value"])
+                        * float(next_value_dict["value"])
                     ),
                 }
                 consumptions.insert(index + 1, new_entry)
@@ -188,8 +190,12 @@ class Invoice:
         customer_postcode = customer_info["postcode"]
         customer_city = customer_info["city"]
         period = self.get_month_range()
+        days_in_month = calendar.monthrange(self.year, self.month)[1]
+        base_tariff = Decimal(customer_info["base_tariff"])
+        energy_tariff = Decimal(customer_info["energy_tariff"])
         base_price = self.get_base_price()
         energy_price = self.get_energy_price()
+        share_period_value = energy_price / (energy_tariff / Decimal(100))
         total_price = base_price + energy_price
 
         report_lines = [
@@ -199,8 +205,9 @@ class Invoice:
             f"Abrechnungszeitraum {period}",
             "Komponente    Anzahl    Preis        Kosten",
             "----------------------------------------------",
-            f"Grundpreis    30 Tage x 170.0 €/Jahr = {base_price:.2f} €",
-            f"Arbeitspreis  1177 kWh x 23.2 ct/kWh = {energy_price:.2f} €",
+            f"Grundpreis    {days_in_month} Tage x {base_tariff} €/Jahr = {base_price:.2f} €",
+            f"Arbeitspreis  {share_period_value.quantize(Decimal("1"), rounding=ROUND_UP)} kWh x "
+            f"{energy_tariff} ct/kWh = {energy_price:.2f} €",
             "----------------------------------------------",
             f"Summe        {total_price:.2f} €",
         ]
@@ -212,10 +219,7 @@ class Invoice:
 
     @staticmethod
     def get_days_difference(first_date: datetime, second_date: datetime) -> int:
-        days_difference = abs((first_date - second_date).days)
-        if days_difference == 0:
-            return first_date.day
-        return days_difference
+        return abs((first_date - second_date).days)
 
     @staticmethod
     def read_csv(file_path: str) -> list[dict[str, str]]:
