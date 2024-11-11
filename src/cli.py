@@ -33,6 +33,18 @@ def get_cli_options() -> Namespace:
         required=True,
         help="Month",
     )
+    parser.add_argument(
+        "--customer-file",
+        type=str,
+        required=True,
+        help="Customer file",
+    )
+    parser.add_argument(
+        "--values-file",
+        type=str,
+        required=True,
+        help="Meter values file",
+    )
     return parser.parse_args()
 
 
@@ -42,6 +54,8 @@ def create_invoice() -> None:
         options.id,
         options.year,
         options.month,
+        options.customer_file,
+        options.values_file,
     )
 
     try:

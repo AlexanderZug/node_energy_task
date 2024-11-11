@@ -1,0 +1,4 @@
+id,name,street,postcode,city,base_tariff,energy_tariff
+12345,Muster,Teststrasse 0,12345,Teststadt,140,24.8
+6789,Adam,Teststrasse2 7,56789,Teststadt2,160,20.0
+9876,Eva,Teststrasse3 4,19399,Teststadt3,155,19.2

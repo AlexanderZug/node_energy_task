@@ -8,19 +8,28 @@ from dateutil import parser
 
 
 class Invoice:
-    def __init__(self, customer_id: str, year: int, month: int) -> None:
+    def __init__(
+        self,
+        customer_id: str,
+        year: int,
+        month: int,
+        customers_file: str | Path,
+        values_file: str | Path,
+    ) -> None:
         self.customer_id = customer_id
         self.year = year
         self.month = month
+        self.customers_file = customers_file
+        self.values_file = values_file
 
     def get_customer(self) -> list[dict[str, str]]:
-        customers = self.read_csv("data/customers.csv")
+        customers = self.read_csv(self.customers_file)
         return [
             customer for customer in customers if customer["id"] == self.customer_id
         ]
 
     def get_meter_values(self) -> list[dict[str, str]]:
-        meter_values = self.read_csv("data/meter_values.csv")
+        meter_values = self.read_csv(self.values_file)
         return [row for row in meter_values if row["customer"] == self.customer_id]
 
     def check_customer_exists(self) -> None:
@@ -31,9 +40,11 @@ class Invoice:
         for value in self.get_meter_values():
             if (
                 not parser.parse(value["date"]).year == self.year
-                and parser.parse(value["date"]).month == self.month
+                or not parser.parse(value["date"]).month == self.month
             ):
-                raise ValueError(f"Date {value['date']} not found.")
+                raise ValueError(
+                    f"Date with month {self.month} and year {self.year} not found."
+                )
 
     def get_sorted_dates(self) -> list[str]:
         dates = []
@@ -208,7 +219,7 @@ class Invoice:
             "Komponente    Anzahl    Preis        Kosten",
             "----------------------------------------------",
             f"Grundpreis    {days_in_month} Tage x {base_tariff} €/Jahr = {base_price:.2f} €",
-            f"Arbeitspreis  {share_period_value.quantize(Decimal("1"), rounding=ROUND_UP)} kWh x "
+            f"Arbeitspreis  {share_period_value.quantize(Decimal('1'), rounding=ROUND_UP)} kWh x "
             f"{energy_tariff} ct/kWh = {energy_price:.2f} €",
             "----------------------------------------------",
             f"Summe        {total_price:.2f} €",
@@ -224,7 +235,7 @@ class Invoice:
         return abs((first_date - second_date).days)
 
     @staticmethod
-    def read_csv(file_path: str) -> list[dict[str, str]]:
+    def read_csv(file_path: str | Path) -> list[dict[str, str]]:
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"File {file_path} not found.")
