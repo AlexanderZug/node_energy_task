@@ -36,13 +36,13 @@ def get_cli_options() -> Namespace:
     parser.add_argument(
         "--customer-file",
         type=str,
-        required=True,
+        default="data/customers.csv",
         help="Customer file",
     )
     parser.add_argument(
         "--values-file",
         type=str,
-        required=True,
+        default="data/meter_values.csv",
         help="Meter values file",
     )
     return parser.parse_args()
@@ -59,7 +59,7 @@ def create_invoice() -> None:
     )
 
     try:
-        invoice.make_report()
+        invoice.make_report("reports")
         logger.info("Invoice created successfully")
     except Exception as exc:
         logger.error("An error occurred: %s", exc)

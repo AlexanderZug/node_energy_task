@@ -64,4 +64,4 @@ strict = true
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
-addopts = ["--cov=app"]
+addopts = ["--cov=src"]

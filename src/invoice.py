@@ -1,7 +1,7 @@
 import calendar
 import csv
 from datetime import datetime, timedelta
-from decimal import ROUND_DOWN, ROUND_UP, Decimal
+from decimal import ROUND_UP, Decimal
 from pathlib import Path
 
 from dateutil import parser
@@ -40,7 +40,7 @@ class Invoice:
         for value in self.get_meter_values():
             if (
                 not parser.parse(value["date"]).year == self.year
-                or not parser.parse(value["date"]).month == self.month
+                and not parser.parse(value["date"]).month == self.month
             ):
                 raise ValueError(
                     f"Date with month {self.month} and year {self.year} not found."
@@ -80,11 +80,14 @@ class Invoice:
             return sorted_dates
         raise ValueError
 
+    def days_in_year(self) -> int:
+        return 366 if calendar.isleap(self.year) else 365
+
     def get_base_price(self) -> Decimal:
         base_tariff = Decimal(self.get_customer()[0]["base_tariff"])
         days_in_month = calendar.monthrange(self.year, self.month)[1]
-        base_price = base_tariff / Decimal(365) * Decimal(days_in_month)
-        return base_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+        base_price = base_tariff / Decimal(self.days_in_year()) * Decimal(days_in_month)
+        return base_price.quantize(Decimal("0.01"), rounding=ROUND_UP)
 
     def get_energy_price(self) -> Decimal:
         energy_tariff = Decimal(self.get_customer()[0]["energy_tariff"])
@@ -99,12 +102,20 @@ class Invoice:
         energy_price = Decimal(share_period[-1]["value"]) * (
             energy_tariff / Decimal(100)
         )
-        return energy_price.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+        return energy_price.quantize(Decimal("0.01"), rounding=ROUND_UP)
 
     def insert_missing_month(
         self, consumptions: list[dict[str, str | Decimal]]
     ) -> list[dict[str, Decimal | str]]:
         meter_values = self.get_meter_values()
+
+        if len(consumptions) == 1:
+            last_record = meter_values[-1]
+            add_last_record: dict[str, str | Decimal] = {
+                "date": last_record["date"],
+                "value": Decimal(last_record["value"]),
+            }
+            consumptions.append(add_last_record)
 
         for index in range(len(consumptions) - 1):
             current_date = parser.parse(str(consumptions[index]["date"]))
@@ -119,6 +130,7 @@ class Invoice:
                         if parser.parse(value["date"]) == next_date
                     ),
                 )
+
                 new_entry: dict[str, str | Decimal] = {
                     "date": new_date.strftime("%Y-%m-%d"),
                     "value": Decimal(
@@ -127,6 +139,7 @@ class Invoice:
                         * float(next_value_dict["value"])
                     ),
                 }
+
                 consumptions.insert(index + 1, new_entry)
                 break
         return consumptions
@@ -180,7 +193,7 @@ class Invoice:
                     "date": date,
                     "value": (
                         first_interval_consumption + second_interval_consumption
-                    ).quantize(Decimal("1"), rounding=ROUND_DOWN),
+                    ).quantize(Decimal("1"), rounding=ROUND_UP),
                 }
             )
         return share_period
@@ -193,7 +206,7 @@ class Invoice:
 
         return f"{first_day.strftime('%d.%m.%Y')} bis {last_day.strftime('%d.%m.%Y')}"
 
-    def make_report(self) -> None:
+    def make_report(self, dir_name: str | Path) -> None:
         self.check_customer_exists()
         self.check_date_exists()
 
@@ -225,7 +238,7 @@ class Invoice:
             f"Summe        {total_price:.2f} €",
         ]
 
-        file_path = Path(f"reports/report_{customer_info['id']}_{self.month}.txt")
+        file_path = Path(f"{dir_name}/report_{customer_info['id']}_{self.month}.txt")
         with file_path.open("w") as file:
             for line in report_lines:
                 file.write(line + "\n")
