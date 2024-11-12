@@ -67,14 +67,14 @@ def test_raises_error_if_date_not_found(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2025, 7, "customers.csv", fixtures_file)
     with pytest.raises(ValueError) as ex:
-        invoice.check_date_exists()
+        invoice.check_values_exist()
     assert str(ex.value) == "Date with month 7 and year 2025 not found."
 
 
 def test_can_sort_dates(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2021, 7, "customers.csv", fixtures_file)
-    dates = invoice.get_sorted_dates()
+    dates = invoice.get_sorted_values()
     assert dates == [
         "2021-02-08",
         "2021-03-02",
@@ -86,7 +86,7 @@ def test_can_sort_dates(fixtures_path: Path) -> None:
 def test_can_check_sufficient_data_available_in_the_past(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2021, 1, "customers.csv", fixtures_file)
-    dates = invoice.get_sorted_dates()
+    dates = invoice.get_sorted_values()
     with pytest.raises(ValueError):
         invoice.check_sufficient_data_available_in_the_past(dates)
 
@@ -94,7 +94,7 @@ def test_can_check_sufficient_data_available_in_the_past(fixtures_path: Path) ->
 def test_can_check_sufficient_data_available_in_the_future(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2021, 7, "customers.csv", fixtures_file)
-    dates = invoice.get_sorted_dates()
+    dates = invoice.get_sorted_values()
     with pytest.raises(ValueError):
         invoice.check_sufficient_data_available_in_the_future(dates)
 
@@ -102,7 +102,7 @@ def test_can_check_sufficient_data_available_in_the_future(fixtures_path: Path) 
 def test_can_check_sufficient_data_available(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2021, 7, "customers.csv", fixtures_file)
-    dates = invoice.get_sorted_dates()
+    dates = invoice.get_sorted_values()
     with pytest.raises(ValueError) as ex:
         invoice.check_sufficient_data_available(dates)
     assert str(ex.value) == "Not sufficient data available"

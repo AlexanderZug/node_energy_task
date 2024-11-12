@@ -36,7 +36,7 @@ class Invoice:
         if not self.get_customer():
             raise ValueError(f"Customer with id {self.customer_id} not found.")
 
-    def check_date_exists(self) -> None:
+    def check_values_exist(self) -> None:
         for value in self.get_meter_values():
             if (
                 not parser.parse(value["date"]).year == self.year
@@ -46,7 +46,7 @@ class Invoice:
                     f"Date with month {self.month} and year {self.year} not found."
                 )
 
-    def get_sorted_dates(self) -> list[str]:
+    def get_sorted_values(self) -> list[str]:
         dates = []
         for value in self.get_meter_values():
             dates.append(value["date"])
@@ -79,9 +79,6 @@ class Invoice:
         if last_date.month > self.month:
             return sorted_dates
         raise ValueError
-
-    def days_in_year(self) -> int:
-        return 366 if calendar.isleap(self.year) else 365
 
     def get_base_price(self) -> Decimal:
         base_tariff = Decimal(self.get_customer()[0]["base_tariff"])
@@ -145,7 +142,7 @@ class Invoice:
         return consumptions
 
     def get_interval_consumption(self) -> list[dict[str, Decimal | str]]:
-        dates = self.check_sufficient_data_available(self.get_sorted_dates())
+        dates = self.check_sufficient_data_available(self.get_sorted_values())
         meter_values = self.get_meter_values()
         share_period: list[dict[str, Decimal | str]] = []
 
@@ -198,6 +195,9 @@ class Invoice:
             )
         return share_period
 
+    def days_in_year(self) -> int:
+        return 366 if calendar.isleap(self.year) else 365
+
     def get_month_range(self) -> str:
         first_day = datetime(self.year, self.month, 1)
 
@@ -208,7 +208,7 @@ class Invoice:
 
     def make_report(self, dir_name: str | Path) -> None:
         self.check_customer_exists()
-        self.check_date_exists()
+        self.check_values_exist()
 
         customer_info = self.get_customer()[0]
         customer_name = customer_info["name"]
