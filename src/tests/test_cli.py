@@ -10,7 +10,7 @@ from src.invoice import Invoice
 
 @pytest.fixture()
 def fixtures_path() -> Path:
-    path = Path(__file__).parent.parent
+    path = Path(__file__).parent
     return path / "fixtures"
 
 
