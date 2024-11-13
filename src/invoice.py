@@ -30,21 +30,24 @@ class Invoice:
 
     def get_meter_values(self) -> list[dict[str, str]]:
         meter_values = self.read_csv(self.values_file)
-        return [row for row in meter_values if row["customer"] == self.customer_id]
+        values_result = []
+        for row in meter_values:
+            if (
+                row["customer"] == self.customer_id
+                and parser.parse(row["date"]).year == self.year
+            ):
+                values_result.append(row)
+        return values_result
 
     def check_customer_exists(self) -> None:
         if not self.get_customer():
             raise ValueError(f"Customer with id {self.customer_id} not found.")
 
-    def check_values_exist(self) -> None:
-        for value in self.get_meter_values():
-            if (
-                not parser.parse(value["date"]).year == self.year
-                and not parser.parse(value["date"]).month == self.month
-            ):
-                raise ValueError(
-                    f"Date with month {self.month} and year {self.year} not found."
-                )
+    def check_values_exist(
+        self,
+    ) -> None:
+        if not self.get_meter_values():
+            raise ValueError(f"Date with year {self.year} not found.")
 
     def get_sorted_values(self) -> list[str]:
         dates = []
@@ -137,7 +140,7 @@ class Invoice:
                     ),
                 }
 
-                consumptions.insert(index + 1, new_entry)
+                consumptions.append(new_entry)
                 break
         return consumptions
 
@@ -149,7 +152,8 @@ class Invoice:
         for index, date in enumerate(dates):
             if index == 0 or index == len(dates) - 1:
                 continue
-
+            # ["2021-02-08", "2021-03-02", "2021-03-30", "2021-04-27",]
+            # ((1 / 22 * 250) + (28 / 30 * 100) + (2 / 29 * 150)) * 24.8 / 100
             current_date = parser.parse(date)
             previous_date = parser.parse(dates[index - 1])
             next_date = parser.parse(dates[index + 1])
@@ -210,6 +214,9 @@ class Invoice:
         self.check_customer_exists()
         self.check_values_exist()
 
+        energy_price = self.get_energy_price()
+        base_price = self.get_base_price()
+
         customer_info = self.get_customer()[0]
         customer_name = customer_info["name"]
         customer_street = customer_info["street"]
@@ -219,8 +226,6 @@ class Invoice:
         days_in_month = calendar.monthrange(self.year, self.month)[1]
         base_tariff = Decimal(customer_info["base_tariff"])
         energy_tariff = Decimal(customer_info["energy_tariff"])
-        base_price = self.get_base_price()
-        energy_price = self.get_energy_price()
         share_period_value = energy_price / (energy_tariff / Decimal(100))
         total_price = base_price + energy_price
 

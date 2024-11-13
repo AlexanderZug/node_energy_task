@@ -63,12 +63,21 @@ def test_can_find_meter_values_for_customer(fixtures_path: Path) -> None:
     assert values[2]["value"] == "100"
 
 
+def test_get_meter_values_return_data_only_for_requested_year(
+    fixtures_path: Path,
+) -> None:
+    fixtures_file = fixtures_path / "values.csv"
+    invoice = Invoice("4567", 2021, 7, "customers.csv", fixtures_file)
+    values = invoice.get_meter_values()
+    assert len(values) == 5  # values only for 2021
+
+
 def test_raises_error_if_date_not_found(fixtures_path: Path) -> None:
     fixtures_file = fixtures_path / "values.csv"
     invoice = Invoice("12345", 2025, 7, "customers.csv", fixtures_file)
     with pytest.raises(ValueError) as ex:
         invoice.check_values_exist()
-    assert str(ex.value) == "Date with month 7 and year 2025 not found."
+    assert str(ex.value) == "Date with year 2025 not found."
 
 
 def test_can_sort_dates(fixtures_path: Path) -> None:
