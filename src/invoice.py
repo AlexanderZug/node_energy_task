@@ -206,7 +206,7 @@ class Invoice:
 
         return f"{first_day.strftime('%d.%m.%Y')} bis {last_day.strftime('%d.%m.%Y')}"
 
-    def make_report(self, dir_name: str | Path) -> None:
+    def make_report(self, dir_name: str | Path = "reports") -> None:
         self.check_customer_exists()
         self.check_values_exist()
 

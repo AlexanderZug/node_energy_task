@@ -59,7 +59,7 @@ def create_invoice() -> None:
     )
 
     try:
-        invoice.make_report("reports")
+        invoice.make_report()
         logger.info("Invoice created successfully")
     except Exception as exc:
         logger.error("An error occurred: %s", exc)
