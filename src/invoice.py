@@ -152,8 +152,7 @@ class Invoice:
         for index, date in enumerate(dates):
             if index == 0 or index == len(dates) - 1:
                 continue
-            # ["2021-02-08", "2021-03-02", "2021-03-30", "2021-04-27",]
-            # ((1 / 22 * 250) + (28 / 30 * 100) + (2 / 29 * 150)) * 24.8 / 100
+
             current_date = parser.parse(date)
             previous_date = parser.parse(dates[index - 1])
             next_date = parser.parse(dates[index + 1])
