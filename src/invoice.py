@@ -30,14 +30,12 @@ class Invoice:
 
     def get_meter_values(self) -> list[dict[str, str]]:
         meter_values = self.read_csv(self.values_file)
-        values_result = []
-        for row in meter_values:
-            if (
-                row["customer"] == self.customer_id
-                and parser.parse(row["date"]).year == self.year
-            ):
-                values_result.append(row)
-        return values_result
+        return [
+            row
+            for row in meter_values
+            if row["customer"] == self.customer_id
+            and parser.parse(row["date"]).year == self.year
+        ]
 
     def check_customer_exists(self) -> None:
         if not self.get_customer():
