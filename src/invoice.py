@@ -43,9 +43,7 @@ class Invoice:
         if not self.get_customer():
             raise ValueError(f"Customer with id {self.customer_id} not found.")
 
-    def check_values_exist(
-        self,
-    ) -> None:
+    def check_values_exist(self) -> None:
         if not self.get_meter_values():
             raise ValueError(f"Date with year {self.year} not found.")
 
