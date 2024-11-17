@@ -35,6 +35,7 @@ class Invoice:
             for row in meter_values
             if row["customer"] == self.customer_id
             and parser.parse(row["date"]).year == self.year
+            or parser.parse(row["date"]).year == self.year - 1
         ]
 
     def check_customer_exists(self) -> None:
@@ -45,7 +46,7 @@ class Invoice:
         if not self.get_meter_values():
             raise ValueError(f"Date with year {self.year} not found.")
 
-    def get_sorted_values(self) -> list[str]:
+    def get_sorted_dates(self) -> list[str]:
         dates = []
         for value in self.get_meter_values():
             dates.append(value["date"])
@@ -69,6 +70,8 @@ class Invoice:
         first_date = parser.parse(sorted_dates[0])
         if first_date.month < self.month:
             return sorted_dates
+        elif first_date.month < self.month and first_date == 1:
+            ...
         raise ValueError
 
     def check_sufficient_data_available_in_the_future(
@@ -91,7 +94,7 @@ class Invoice:
 
         share_period = [
             date
-            for date in self.insert_missing_month(consumptions)
+            for date in self.add_missing_month(consumptions)
             if parser.parse(str(date["date"])).month == self.month
         ]
 
@@ -100,7 +103,7 @@ class Invoice:
         )
         return energy_price.quantize(Decimal("0.01"), rounding=ROUND_UP)
 
-    def insert_missing_month(
+    def add_missing_month(
         self, consumptions: list[dict[str, str | Decimal]]
     ) -> list[dict[str, Decimal | str]]:
         meter_values = self.get_meter_values()
@@ -141,7 +144,7 @@ class Invoice:
         return consumptions
 
     def get_interval_consumption(self) -> list[dict[str, Decimal | str]]:
-        dates = self.check_sufficient_data_available(self.get_sorted_values())
+        dates = self.check_sufficient_data_available(self.get_sorted_dates())
         meter_values = self.get_meter_values()
         share_period: list[dict[str, Decimal | str]] = []
 
@@ -231,11 +234,11 @@ class Invoice:
             f"Abrechnungszeitraum {period}",
             "Komponente    Anzahl    Preis        Kosten",
             "----------------------------------------------",
-            f"Grundpreis    {days_in_month} Tage x {base_tariff} €/Jahr = {base_price:.2f} €",
+            f"Grundpreis    {days_in_month} Tage x {base_tariff} €/Jahr = {base_price} €",
             f"Arbeitspreis  {share_period_value.quantize(Decimal('1'), rounding=ROUND_UP)} kWh x "
-            f"{energy_tariff} ct/kWh = {energy_price:.2f} €",
+            f"{energy_tariff} ct/kWh = {energy_price} €",
             "----------------------------------------------",
-            f"Summe        {total_price:.2f} €",
+            f"Summe        {total_price} €",
         ]
 
         file_path = Path(f"{dir_name}/report_{customer_info['id']}_{self.month}.txt")
