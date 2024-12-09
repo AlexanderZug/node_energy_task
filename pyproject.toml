@@ -18,7 +18,7 @@ mypy = { extras = ["reports"], version = "*" }
 pytest = "*"
 pytest-cov = "*"
 ruff = "*"
-types-python-dateutil = "^2.9.0.20241003"
+types-python-dateutil = "^2.9.0.20241206"
 
 [build-system]
 requires = ["poetry-core"]
